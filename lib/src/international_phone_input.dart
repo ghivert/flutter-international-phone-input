@@ -29,6 +29,7 @@ class InternationalPhoneInput extends StatefulWidget {
   final Widget dropdownIcon;
   final InputBorder border;
   final TextEditingController controller;
+  final Color focusColor;
 
   InternationalPhoneInput({
     this.onPhoneNumberChange,
@@ -48,6 +49,7 @@ class InternationalPhoneInput extends StatefulWidget {
     this.dropdownIcon,
     this.border,
     this.controller,
+    this.focusColor,
   });
 
   static Future<String> internationalizeNumber(String number, String iso) {
@@ -64,20 +66,27 @@ class _InternationalPhoneInputState extends State<InternationalPhoneInput> {
   List<Country> countries;
   bool hasError;
   TextEditingController phoneTextController;
+  FocusNode focusNode;
 
   @override
-  void initState() async {
+  void initState() {
     countries = [];
     hasError = false;
+    focusNode = FocusNode();
+    focusNode.addListener(() => setState(() {}));
     phoneTextController = widget.controller ?? TextEditingController()
       ..text = widget.initialPhoneNumber;
+    _asyncInitState();
+    super.initState();
+  }
+
+  Future<void> _asyncInitState() async {
     final data = await _fetchCountryData();
     final preSelectedItem = _findPreselectedItem(data);
     setState(() {
       countries = data;
       selectedItem = preSelectedItem;
     });
-    super.initState();
   }
 
   Country _findPreselectedItem(List<Country> countries) {
@@ -143,6 +152,7 @@ class _InternationalPhoneInputState extends State<InternationalPhoneInput> {
             decoration: widget.decoration,
           ),
           _PhoneTextField(
+            focusNode: focusNode,
             phoneTextController: phoneTextController,
             onChanged: (_) => _validatePhoneNumber(),
             hasError: hasError,
@@ -155,7 +165,8 @@ class _InternationalPhoneInputState extends State<InternationalPhoneInput> {
             errorStyle: widget.errorStyle,
             errorMaxLines: widget.errorMaxLines,
             border: widget.border,
-          )
+            textColor: focusNode.hasFocus ? widget.focusColor : null,
+          ),
         ],
       ),
     );
@@ -175,6 +186,8 @@ class _PhoneTextField extends StatelessWidget {
   final TextStyle errorStyle;
   final int errorMaxLines;
   final InputBorder border;
+  final FocusNode focusNode;
+  final Color textColor;
 
   const _PhoneTextField({
     Key key,
@@ -190,6 +203,8 @@ class _PhoneTextField extends StatelessWidget {
     @required this.errorStyle,
     @required this.errorMaxLines,
     @required this.border,
+    @required this.focusNode,
+    @required this.textColor,
   }) : super(key: key);
 
   @override
@@ -199,20 +214,21 @@ class _PhoneTextField extends StatelessWidget {
     const lines = 3;
     return Flexible(
       child: TextField(
+        focusNode: focusNode,
         onChanged: onChanged,
         keyboardType: TextInputType.phone,
         controller: phoneTextController,
-        decoration: decoration ?? InputDecoration()
-          ..copyWith(
-            hintText: hintText ?? decoration.hintText ?? hint,
-            labelText: labelText ?? decoration.labelText,
-            errorText: hasError ? errorText ?? error : null,
-            hintStyle: hintStyle ?? decoration.hintStyle,
-            errorStyle: errorStyle ?? decoration.errorStyle,
-            labelStyle: labelStyle ?? decoration.labelStyle,
-            errorMaxLines: errorMaxLines ?? decoration.errorMaxLines ?? lines,
-            border: border ?? decoration.border,
-          ),
+        decoration: (decoration ?? InputDecoration()).copyWith(
+          labelStyle:
+              labelStyle.copyWith(color: textColor) ?? decoration?.labelStyle,
+          hintText: hintText ?? decoration?.hintText ?? hint,
+          labelText: labelText ?? decoration?.labelText,
+          errorText: hasError ? (errorText ?? error) : null,
+          hintStyle: hintStyle ?? decoration?.hintStyle,
+          errorStyle: errorStyle ?? decoration?.errorStyle,
+          errorMaxLines: errorMaxLines ?? decoration?.errorMaxLines ?? lines,
+          border: border ?? decoration?.border,
+        ),
       ),
     );
   }
