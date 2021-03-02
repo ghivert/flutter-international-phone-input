@@ -212,6 +212,8 @@ class _PhoneTextField extends StatelessWidget {
     const hint = 'eg. 244056345';
     const error = 'Please enter a valid phone number';
     const lines = 3;
+    final defaultError = hasError ? (errorText ?? error) : null;
+    final l = labelStyle.copyWith(color: textColor) ?? decoration?.labelStyle;
     return Flexible(
       child: TextField(
         focusNode: focusNode,
@@ -219,11 +221,10 @@ class _PhoneTextField extends StatelessWidget {
         keyboardType: TextInputType.phone,
         controller: phoneTextController,
         decoration: (decoration ?? InputDecoration()).copyWith(
-          labelStyle:
-              labelStyle.copyWith(color: textColor) ?? decoration?.labelStyle,
+          labelStyle: l,
           hintText: hintText ?? decoration?.hintText ?? hint,
           labelText: labelText ?? decoration?.labelText,
-          errorText: hasError ? (errorText ?? error) : null,
+          errorText: decoration?.errorText ?? defaultError,
           hintStyle: hintStyle ?? decoration?.hintStyle,
           errorStyle: errorStyle ?? decoration?.errorStyle,
           errorMaxLines: errorMaxLines ?? decoration?.errorMaxLines ?? lines,
